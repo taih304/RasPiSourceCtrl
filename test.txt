@@ -1,1 +1,3 @@
 conflict
+update something
+line1
