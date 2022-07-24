@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/device_file/gpio/gpio.ko := ld -r -EL --build-id=sha1  -T scripts/module.lds -o /home/pi/myspace/device_file/gpio/gpio.ko /home/pi/myspace/device_file/gpio/gpio.o /home/pi/myspace/device_file/gpio/gpio.mod.o;  true
