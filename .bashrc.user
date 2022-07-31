@@ -43,3 +43,12 @@ alias raspi='cd /home/pi/myspace/RasPiSourceCtrl'
 module_build () {
     /home/pi/myspace/module_build/build.sh $@
 }
+
+dto_build () {
+    file_name=$(echo $1 | cut -d "." -f1)
+    dtc -@ -I dts -O dtb -o ${file_name}.dtbo $1
+}
+dt_build () {
+    file_name=$(echo $1 | cut -d "." -f1)
+    dtc -@ -I dts -O dtb -o ${file_name}.dtb $1
+}
