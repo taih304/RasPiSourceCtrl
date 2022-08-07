@@ -55,17 +55,21 @@ dt_build () {
 
 kmess () {
     T="0.4"
+    S="-10"
     if [[ ! -z "$1" ]]; then
         T="$1"
     fi
-    current=$(dmesg | tail | tac)
+    if [[ ! -z "$2" ]]; then
+        S="$2"
+    fi
+    current=$(dmesg | tail $S | tac)
     sleep $T
 
     while true
     do
         new_block_of_lines=""
         last_line_of_current=$(head -1 <<< "$current")
-        next=$(dmesg | tail | tac)
+        next=$(dmesg | tail $S | tac)
         while read -r line
         do
             if [[ "$line" != "$last_line_of_current" ]]; then
