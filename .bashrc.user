@@ -57,3 +57,7 @@ unpack_dts() {
     output_file=${1:-"device_tree.dts"}
     dtc -q -I fs /sys/firmware/devicetree/base > $output_file
 }
+
+code_bashrc() {
+    code "${BASH_SOURCE[0]}"
+}
