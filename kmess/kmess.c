@@ -83,7 +83,7 @@ int main(int argc, char** args)
         exit(EXIT_FAILURE);
     }
 
-    char* output_content_msg;
+    char* analize_content_msg;
     for (;;) {
         bzero(buffer, 1024);
         nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
@@ -99,7 +99,7 @@ int main(int argc, char** args)
                 // 4,516,1452858886,-;<kernel message>
                 // string process
                 char* content_msg = strstr(buffer, ";") + 1;
-                free(output_content_msg);
+                free(analize_content_msg);
                 if (my_cli_hanlder.m_option != 0)
                 {
                     content_msg[strlen(content_msg) - 1] = 0; // strip out lats \n
@@ -108,60 +108,49 @@ int main(int argc, char** args)
                 {
                     content_msg = strtok(content_msg, "\n");
                 }
-                
+
+                analize_content_msg = malloc(strlen(content_msg) + 1);
+                strcpy(analize_content_msg, content_msg);
                 if (my_cli_hanlder.i_option != 0)
                 {
-                    output_content_msg = malloc(strlen(content_msg) + 1);
-                    strcpy(output_content_msg, my_cli_hanlder.e_option.pattern);
-                    TOLOWER(output_content_msg);
-                }
-                else
-                {
-                    output_content_msg = content_msg;
+                    TOLOWER(analize_content_msg);
                 }
 
                 if (my_cli_hanlder.e_option.index != 0)
                 {
-                    char* match_pattern;
+                    char* match_pattern = malloc(strlen(my_cli_hanlder.e_option.pattern) + 1);
+                    strcpy(match_pattern, my_cli_hanlder.e_option.pattern);
                     if (my_cli_hanlder.i_option != 0)
                     {
-                        match_pattern = malloc(strlen(my_cli_hanlder.e_option.pattern) + 1);
-                        strcpy(match_pattern, my_cli_hanlder.e_option.pattern);
                         TOLOWER(match_pattern);
                     }
-                    else
-                    {
-                        match_pattern = my_cli_hanlder.e_option.pattern;
-                    }
-                    bool isMatch = STRCT(output_content_msg, match_pattern);
+                    bool isMatch = STRCT(analize_content_msg, match_pattern);
                     free(match_pattern);
                     if (isMatch == false)
                     {
                         continue;
                     }
+                }
+                if (my_cli_hanlder.i_option != 0)
+                {
+                    TOLOWER(analize_content_msg);
                 }
 
                 if (my_cli_hanlder.v_option.index != 0)
                 {
-                    char* match_pattern;
+                    char* match_pattern = malloc(strlen(my_cli_hanlder.v_option.pattern) + 1);
+                    strcpy(match_pattern, my_cli_hanlder.v_option.pattern);
                     if (my_cli_hanlder.i_option != 0)
                     {
-                        match_pattern = malloc(strlen(my_cli_hanlder.e_option.pattern) + 1);
-                        strcpy(match_pattern, my_cli_hanlder.e_option.pattern);
                         TOLOWER(match_pattern);
                     }
-                    else
-                    {
-                        match_pattern = my_cli_hanlder.v_option.pattern;
-                    }
-                    bool isMatch = STRNCT(output_content_msg, match_pattern);
+                    bool isMatch = STRNCT(analize_content_msg, match_pattern);
                     free(match_pattern);
                     if (isMatch == false)
                     {
                         continue;
                     }
                 }
-
                 char* num_str = strtok(buffer, ";");
                 char* time_str = strtok(num_str, ",");
                 time_str = strtok(NULL, ",");
