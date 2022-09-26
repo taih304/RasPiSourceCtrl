@@ -83,7 +83,7 @@ int main(int argc, char** args)
         exit(EXIT_FAILURE);
     }
 
-    char* analize_content_msg;
+    char* analize_content_msg = NULL;
     for (;;) {
         bzero(buffer, 1024);
         nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
