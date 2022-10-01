@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/kernel_module/race_condition/Module.symvers := sed 's/\.ko$$/\.o/' /home/pi/myspace/kernel_module/race_condition/modules.order | scripts/mod/modpost -m -a  -o /home/pi/myspace/kernel_module/race_condition/Module.symvers -e -i Module.symvers   -T -

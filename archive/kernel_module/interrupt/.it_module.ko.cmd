@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/kernel_module/interrupt/it_module.ko := ld -r -EL --build-id=sha1  -T scripts/module.lds -o /home/pi/myspace/kernel_module/interrupt/it_module.ko /home/pi/myspace/kernel_module/interrupt/it_module.o /home/pi/myspace/kernel_module/interrupt/it_module.mod.o;  true

@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/device_file/platform_driver/pl_driver.ko := ld -r -EL --build-id=sha1  -T scripts/module.lds -o /home/pi/myspace/device_file/platform_driver/pl_driver.ko /home/pi/myspace/device_file/platform_driver/pl_driver.o /home/pi/myspace/device_file/platform_driver/pl_driver.mod.o;  true

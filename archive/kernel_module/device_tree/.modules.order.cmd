@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/kernel_module/device_tree/modules.order := {   echo /home/pi/myspace/kernel_module/device_tree/module_test.ko; :; } | awk '!x[$$0]++' - > /home/pi/myspace/kernel_module/device_tree/modules.order

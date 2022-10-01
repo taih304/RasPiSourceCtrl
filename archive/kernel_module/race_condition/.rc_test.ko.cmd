@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/kernel_module/race_condition/rc_test.ko := ld -r -EL --build-id=sha1  -T scripts/module.lds -o /home/pi/myspace/kernel_module/race_condition/rc_test.ko /home/pi/myspace/kernel_module/race_condition/rc_test.o /home/pi/myspace/kernel_module/race_condition/rc_test.mod.o;  true

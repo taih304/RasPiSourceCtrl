@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/kernel_module/i2c_interrupt/modules.order := {   echo /home/pi/myspace/kernel_module/i2c_interrupt/i2c_it.ko; :; } | awk '!x[$$0]++' - > /home/pi/myspace/kernel_module/i2c_interrupt/modules.order

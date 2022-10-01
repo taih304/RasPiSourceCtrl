@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/kernel_module/i2c_interrupt/Module.symvers := sed 's/\.ko$$/\.o/' /home/pi/myspace/kernel_module/i2c_interrupt/modules.order | scripts/mod/modpost -m -a  -o /home/pi/myspace/kernel_module/i2c_interrupt/Module.symvers -e -i Module.symvers   -T -

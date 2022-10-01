@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/device_file/platform_driver/pl_driver.mod := { echo  /home/pi/myspace/device_file/platform_driver/pl_driver.o;  echo; } > /home/pi/myspace/device_file/platform_driver/pl_driver.mod

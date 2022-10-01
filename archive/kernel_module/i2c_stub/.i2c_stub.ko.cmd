@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/kernel_module/i2c_stub/i2c_stub.ko := ld -r -EL --build-id=sha1  -T scripts/module.lds -o /home/pi/myspace/kernel_module/i2c_stub/i2c_stub.ko /home/pi/myspace/kernel_module/i2c_stub/i2c_stub.o /home/pi/myspace/kernel_module/i2c_stub/i2c_stub.mod.o;  true

@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/device_file/character_device/Module.symvers := sed 's/\.ko$$/\.o/' /home/pi/myspace/device_file/character_device/modules.order | scripts/mod/modpost -m -a  -o /home/pi/myspace/device_file/character_device/Module.symvers -e -i Module.symvers   -T -

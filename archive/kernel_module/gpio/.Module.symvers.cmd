@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/device_file/gpio/Module.symvers := sed 's/\.ko$$/\.o/' /home/pi/myspace/device_file/gpio/modules.order | scripts/mod/modpost -m -a  -o /home/pi/myspace/device_file/gpio/Module.symvers -e -i Module.symvers   -T -

@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/device_file/character_device/device_nr.ko := ld -r -EL --build-id=sha1  -T scripts/module.lds -o /home/pi/myspace/device_file/character_device/device_nr.ko /home/pi/myspace/device_file/character_device/device_nr.o /home/pi/myspace/device_file/character_device/device_nr.mod.o;  true

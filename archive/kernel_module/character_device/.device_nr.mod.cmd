@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/device_file/character_device/device_nr.mod := { echo  /home/pi/myspace/device_file/character_device/device_nr.o;  echo; } > /home/pi/myspace/device_file/character_device/device_nr.mod

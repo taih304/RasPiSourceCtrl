@@ -1,0 +1,1 @@
+cmd_/home/pi/myspace/kernel_module/i2c_interrupt/i2c_it.ko := ld -r -EL --build-id=sha1  -T scripts/module.lds -o /home/pi/myspace/kernel_module/i2c_interrupt/i2c_it.ko /home/pi/myspace/kernel_module/i2c_interrupt/i2c_it.o /home/pi/myspace/kernel_module/i2c_interrupt/i2c_it.mod.o;  true
