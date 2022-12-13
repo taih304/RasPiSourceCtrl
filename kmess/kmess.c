@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include "kmess_cli_handler.h"
 
-#define MAX_EVENTS 5
+#define MAX_EVENTS 1
 #define TOLOWER(str) for (char* p = str ; *p; ++p) *p = tolower(*p);
 
 char buffer[1024];
@@ -19,7 +19,7 @@ cli_handler my_cli_hanlder;
 
 char kmess_help[]=
 "Usage: kmess [OPTION]\n"\
-"   , --help     Get help for the command\n"\
+" -h,            Get help for the command\n"\
 " -m             Some kernel message is multi-lines, use this to display full msg\n"\
 "                1 line displayed is default\n"\
 " -e             use pattern for matching, not currently supporting regexp\n"\
@@ -53,6 +53,8 @@ int main(int argc, char** args)
         isMultipleLine = true;
     }
 
+    // Set up signal to override the ctrl + c action
+    // Just for the purpose of safe exit when pressing ctrl + c
     struct sigaction sa;
     sa.sa_sigaction = &signal_action_handler;
     sa.sa_flags = SA_SIGINFO;
@@ -102,7 +104,7 @@ int main(int argc, char** args)
                 free(analize_content_msg);
                 if (my_cli_hanlder.m_option != 0)
                 {
-                    content_msg[strlen(content_msg) - 1] = 0; // strip out lats \n
+                    content_msg[strlen(content_msg) - 1] = 0; // strip out last \n
                 }
                 else
                 {
@@ -155,6 +157,9 @@ int main(int argc, char** args)
                 char* time_str = strtok(num_str, ",");
                 time_str = strtok(NULL, ",");
                 time_str = strtok(NULL, ",");
+
+                // get the third string number after commas
+                // this number represents the number of micro second from starting kernel to present
                 long long ret = atoll(time_str);
                 double time_s = ret / 1000000.0;
 
