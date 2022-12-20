@@ -13,6 +13,8 @@
 #define TOLOWER(str) for (char* p = str ; *p; ++p) *p = tolower(*p);
 
 char buffer[1024];
+char temp_buffer[1024];
+const char newline_hex[4] = {'\\', 'x', '0', 'a'};
 int epollfd, fd;
 bool isMultipleLine = false;
 cli_handler my_cli_hanlder;
@@ -164,7 +166,50 @@ int main(int argc, char** args)
                 double time_s = ret / 1000000.0;
 
                 // final printf
-                printf("[ %.6lf] %s\n", time_s, content_msg);
+                // check multipline option to handle hex output "\x0a"
+                // char *oke_ne = strstr(content_msg, newline_hex);
+
+                //  char line1[] = "line1";
+                //     char line2[] = "line2";
+                //     char line3[] = "line3";
+
+                //     char final_line[100] = {0};
+                //     strcat(final_line, line1);
+                //     strcat(final_line, newline_hex);
+                //     strcat(final_line, line2);
+                //     strcat(final_line, newline_hex);
+                //     strcat(final_line, line3);
+                //     strcat(final_line, newline_hex);
+                //     printf("final: %s\n", strstr(content_msg, newline_hex));
+
+                // if (my_cli_hanlder.m_option != 0 && strstr(content_msg, newline_hex) != NULL)
+                // {
+                    int temp_size = strlen(content_msg);
+                    char* s_ptr = content_msg;
+                    char* p_ptr = s_ptr;
+                    bzero(temp_buffer, 1024);
+                    if(s_ptr[5] == '\\') printf("yes1\n");
+                    if(s_ptr[6] == 'x') printf("yes2\n");
+                    if(s_ptr[7] == '0') printf("yes3\n");
+                    if(s_ptr[8] == 'a') printf("yes4\n");
+                    while((s_ptr = strstr(s_ptr, newline_hex)) != NULL)
+                    {
+                        printf("here: %d\n", temp_size);
+                        *s_ptr = 0;
+                        strcat(temp_buffer, p_ptr);
+                        strcat(temp_buffer, "\n");
+                        s_ptr+=4;
+                        p_ptr = s_ptr;
+                    }
+                     if(p_ptr != (content_msg + temp_size)){
+                        strcat(temp_buffer, p_ptr);
+                    }
+                    printf("[ %.6lf] %s\n", time_s, temp_buffer);
+                // }
+                // else
+                // {
+                //     printf("[ %.6lf] %s\n", time_s, content_msg);
+                // }
 
             } else {
                 // weird behavior
