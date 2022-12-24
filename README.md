@@ -1,0 +1,1 @@
+## This repo contains some on going project with RasberryPI
