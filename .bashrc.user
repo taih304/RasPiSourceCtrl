@@ -39,6 +39,7 @@ export PS1="$COLOR_LIGHT_GREEN\A $COLOR_WHITE[$COLOR_CYAN\u@\h$COLOR_WHITE:$COLO
 
 alias myspace='cd /home/pi/myspace'
 alias raspi='cd /home/pi/myspace/RasPiSourceCtrl'
+alias ll='ls -la'
 
 module_build () {
     /home/pi/myspace/module_build/build.sh $@
