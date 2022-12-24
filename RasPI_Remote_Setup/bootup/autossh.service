@@ -1,0 +1,9 @@
+[Unit]
+Description=Auto ssh service
+After=network.target
+
+[Service]
+ExecStart=/bin/bash /home/pi/workspace/init_script/bootup/bootup_wrapper.sh
+
+[Install]
+WantedBy=multi-user.target

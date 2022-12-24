@@ -1,0 +1,27 @@
+
+# Tell systemd that we add some stuff
+systemctl daemon-reload
+
+# Start the service
+systemctl start <service name>
+
+# Enable the service
+systemctl enable <service name>
+
+
+# full ssh command
+ssh -i $KEY_PAIR_LOCATION -tt -o StrictHostKeyChecking=no -R 2222:localhost:22 ubuntu@$E2C_HOSTNAME
+
+-tt: disable pseudo tty for stdin (error: Pseudo-terminal will not be allocated because stdin is not a terminal)
+-o: answer yes when accepting the connection
+2222: reverse tunneling port open on the e2c instance
+
+
+# List out all the running service
+systemctl --type=service
+
+# Read the log from a service
+journalctl -u <service name>
+
+# path for placing all the services
+/etc/systemd/system/
