@@ -1,5 +1,6 @@
 # python3.6
 
+import time
 import random
 import json
 import subprocess
@@ -91,7 +92,8 @@ def subscribe(client: mqtt_client):
 
 
 def run():
-    debug("MQTT program start")
+    debug("MQTT program start, wait 30s for network fully loaded and connect to mqtt")
+    time.sleep(30)
     client = connect_mqtt()
     subscribe(client)
     client.loop_forever()
