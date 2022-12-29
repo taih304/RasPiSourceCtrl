@@ -1,6 +1,5 @@
 # define list for control command from mqtt
 
-
 0: Restart the ssh tunnelling service
 1: Stop the ssh tunnelling service
 2: Start the ssh tunnelling service
