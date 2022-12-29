@@ -58,6 +58,9 @@ def ssh_enable():
     debug("Enable ssh connection to sing host")
     exec('echo a | sudo -S systemctl enable autossh.service')
 
+def reboot_raspi():
+    debug("Reboot RasberryPI")
+    exec('echo a | sudo -S reboot')
 
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
@@ -76,6 +79,8 @@ def subscribe(client: mqtt_client):
                 ssh_disable()
             elif command == 4:
                 ssh_enable()
+            elif command == 5:
+                reboot_raspi()
             else:
                 print("Command hasn't yet been supported")
         else:
