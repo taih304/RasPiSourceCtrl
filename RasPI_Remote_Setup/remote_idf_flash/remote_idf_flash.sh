@@ -1,11 +1,15 @@
 #!/bin/bash
 
+if [[ -n $IDF_PATH ]]; then
+
 PORT=$1
+
+# Configure session
 TEMP_LOG_SPACE=/home/$USER/workspace/my_script/remote_idf_flash/temp.txt
 PI_PASSWD=a
 
+# start the program
 idf.py build | tee $TEMP_LOG_SPACE
-
 
 cat $TEMP_LOG_SPACE | grep -q -m 1 "To flash, run this command"
 FLASH_RESULT=$?
@@ -45,6 +49,12 @@ else
 
     rm -fr build_files
     rm -f build_files.tar.gz
+
+fi
+
+else
+
+echo "Unset IDF environment, please run the get_idf command"
 
 fi
 
