@@ -1,3 +1,5 @@
+# systemd path
+/etc/systemd/system/
 
 # Tell systemd that we add some stuff
 systemctl daemon-reload

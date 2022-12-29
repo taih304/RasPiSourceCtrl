@@ -1,0 +1,10 @@
+[Unit]
+Description=mqtt service for managing control raspi
+After=network.target
+
+[Service]
+ExecStart=python3 /home/pi/workspace/code_test/mqtt_python/subscriber.py
+Environment="PYTHONPATH=$PYTHONPATH:/home/pi/.local/lib/python3.9/site-packages"
+
+[Install]
+WantedBy=multi-user.target
