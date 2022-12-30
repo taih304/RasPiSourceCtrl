@@ -8,7 +8,6 @@ from subprocess import call
 
 from paho.mqtt import client as mqtt_client
 
-
 broker = 'broker.emqx.io'
 port = 1883
 prefix_ident = "htt.contact167"
@@ -38,27 +37,41 @@ def connect_mqtt() -> mqtt_client:
     client.connect(broker, port)
     return client
 
-def ssh_restart():
+def rsp_command(client, ident, cmd, message):
+    rsp_data = {}
+    rsp_data['ident'] = 'raspi'
+    rsp_data['rsp'] = cmd
+    rsp_data['message'] = message
+    temp_topic = f"{prefix_ident}/{ident}_topic"
+    client.publish(temp_topic, json.dumps(rsp_data))
+
+def ssh_restart(client, identity):
     debug("Restart ssh connection to sing host")
     exec('echo a | sudo -S systemctl restart autossh.service')
+    rsp_command(client, identity, 0, "autossh service restarted")
 
-def ssh_stop():
+def ssh_stop(client, identity):
     debug("Stop ssh connection to sing host")
     exec('echo a | sudo -S systemctl stop autossh.service')
+    rsp_command(client, identity, 1, "autossh service stopped")
 
-def ssh_start():
+def ssh_start(client, identity):
     debug("Start ssh connection to sing host")
     exec('echo a | sudo -S systemctl start autossh.service')
+    rsp_command(client, identity, 2, "autossh service started")
 
-def ssh_disable():
+def ssh_disable(client, identity):
     debug("Disable ssh connection to sing host")
     exec('echo a | sudo -S systemctl disable autossh.service')
+    rsp_command(client, identity, 3, "autossh service disabled")
 
-def ssh_enable():
+def ssh_enable(client, identity):
     debug("Enable ssh connection to sing host")
     exec('echo a | sudo -S systemctl enable autossh.service')
+    rsp_command(client, identity, 4, "autossh service enabled")
 
-def reboot_raspi():
+def reboot_raspi(client, identity):
+    rsp_command(client, identity, 5, "Reboot RasberryPI")
     debug("Reboot RasberryPI")
     exec('echo a | sudo -S reboot')
 
@@ -70,17 +83,17 @@ def subscribe(client: mqtt_client):
         if identity in ident_allow_list:
             command = data_json['cmd'] # 0 to 127
             if command == 0: # restart ssh to sing host service
-                ssh_restart()
+                ssh_restart(client, identity)
             elif command == 1:
-                ssh_stop()
+                ssh_stop(client, identity)
             elif command == 2:
-                ssh_start()
+                ssh_start(client, identity)
             elif command == 3:
-                ssh_disable()
+                ssh_disable(client, identity)
             elif command == 4:
-                ssh_enable()
+                ssh_enable(client, identity)
             elif command == 5:
-                reboot_raspi()
+                reboot_raspi(client, identity)
             else:
                 print("Command hasn't yet been supported")
         else:
@@ -101,11 +114,3 @@ def run():
 if __name__ == '__main__':
     run()
 
-# result = client.publish(topic, msg)
-# # result: [0, 1]
-# status = result[0]
-# if status == 0:
-#     print(f"Send `{msg}` to topic `{topic}`")
-# else:
-#     print(f"Failed to send message to topic {topic}")
-# msg_count += 1
