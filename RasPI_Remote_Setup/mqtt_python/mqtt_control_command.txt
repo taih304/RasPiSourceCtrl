@@ -6,3 +6,5 @@
 3: Disable the ssh tunnelling service
 4: Enable the ssh tunnelling service
 5: Reboot the RasberryPI
+6: Get ssh tunnelling service status
+

@@ -18,10 +18,12 @@ ident_allow_list = ['singhost', 'tokyohost', 'esp32']
 client_id = f'htt-client-167943522'
 username = ''
 password = ''
-is_debug = True
+# is_debug = True
+is_debug = False
 
 def debug(message):
-    call(f"echo {message}", shell=True)
+    if is_debug:
+        call(f"echo {message}", shell=True)
 def exec(command):
     call(command, shell=True)
 
@@ -75,6 +77,15 @@ def reboot_raspi(client, identity):
     debug("Reboot RasberryPI")
     exec('echo a | sudo -S reboot')
 
+def get_and_rsp_ssh_status(client, identity):
+    debug("Get autossh status")
+    cmd = ['/home/pi/workspace/code_test/mqtt_python/get_autossh_status.sh']
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    o, e = proc.communicate()
+    status_str = o.decode('ascii')
+    status_obj = json.loads(status_str)
+    rsp_command(client, identity, 6, status_obj)
+
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
         print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
@@ -94,6 +105,8 @@ def subscribe(client: mqtt_client):
                 ssh_enable(client, identity)
             elif command == 5:
                 reboot_raspi(client, identity)
+            elif command == 6:
+                get_and_rsp_ssh_status(client, identity)
             else:
                 print("Command hasn't yet been supported")
         else:
