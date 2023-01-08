@@ -1,6 +1,7 @@
 import readline
 import time
 import random
+import string
 import json
 import subprocess
 from subprocess import call
@@ -15,7 +16,7 @@ receive_topic = "zS02DyLeTKUKVp"
 enable_header = "Jd3RK1VllBZatc"
 shell_header = "iPlbYNbPgAUu6z"
 # generate client ID with pub prefix randomly
-client_id = 'WXhMjazOJ4eCBR'
+client_id = 'WXhMjazOJ4eCBR' # default
 
 
 shell_enabled = True
@@ -26,6 +27,11 @@ mqtt_connect_status = False
 output_received = False
 send_id = 0
 receive_id = 0
+
+def get_random_string(length):
+    letters = string.ascii_letters + string.digits
+    result_str = ''.join(random.choice(letters) for i in range(length))
+    return result_str
 
 def exec(command):
     call(command, shell=True)
@@ -139,4 +145,6 @@ def run():
         
 
 if __name__ == '__main__':
+    global client_id
+    client_id = get_random_string(14)
     run()
