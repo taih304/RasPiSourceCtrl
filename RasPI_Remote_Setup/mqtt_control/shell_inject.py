@@ -89,6 +89,8 @@ def run():
     global is_attach
     global output_received
     global send_id, receive_id
+    global client_id
+    client_id = get_random_string(14)
     print("Program start")
     parser = optparse.OptionParser()
     parser.add_option("-a", "--attach",
@@ -145,6 +147,4 @@ def run():
         
 
 if __name__ == '__main__':
-    global client_id
-    client_id = get_random_string(14)
     run()
