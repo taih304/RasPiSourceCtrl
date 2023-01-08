@@ -1,0 +1,10 @@
+[Unit]
+Description=mqtt service for shell control
+After=network.target
+
+[Service]
+ExecStart=python3 /home/pi/workspace/control_service/monitor.py
+Environment="PYTHONPATH=$PYTHONPATH:/home/pi/.local/lib/python3.9/site-packages"
+
+[Install]
+WantedBy=multi-user.target
