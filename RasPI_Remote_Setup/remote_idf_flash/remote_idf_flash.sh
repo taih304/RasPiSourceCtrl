@@ -45,7 +45,7 @@ else
     tar -czvf build_files.tar.gz build_files
 
     sshpass -p $PI_PASSWD scp -P 2222 build_files.tar.gz pi@localhost:/tmp
-    sshpass -p $PI_PASSWD ssh -p 2222 -o ConnectTimeout=10 -tt -o StrictHostKeyChecking=no pi@localhost "cd /tmp && . /home/pi/esp/esp-idf/export.sh && tar -xvf build_files.tar.gz && esptool.py $FLASH_COMMAND && rm -f build_files.tar.gz && rm -fr build_files"
+    sshpass -p $PI_PASSWD ssh -p 2222 -o ConnectTimeout=10 -tt -o StrictHostKeyChecking=no pi@localhost "cd /tmp && . /home/pi/esp/esp-idf/export.sh && tar -xvf build_files.tar.gz && esptool.py $FLASH_COMMAND && rm -f build_files.tar.gz && rm -fr build_files && idf.py -p $PORT monitor"
 
     rm -fr build_files
     rm -f build_files.tar.gz

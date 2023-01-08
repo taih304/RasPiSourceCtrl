@@ -14,6 +14,7 @@ prefix_ident = "htt.contact167"
 raspi_topic = f"{prefix_ident}/raspi_topic"
 singhost_topic = f"{prefix_ident}/singhost_topic"
 ident_allow_list = ['singhost', 'tokyohost', 'esp32']
+raspi_topic_console = f"{raspi_topic}/dummy"
 # generate client ID with pub prefix randomly
 client_id = f'htt-client-167943522'
 username = ''
@@ -88,29 +89,47 @@ def get_and_rsp_ssh_status(client, identity):
 
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
-        print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
-        data_json = json.loads(msg.payload.decode())
-        identity = data_json['ident']
-        if identity in ident_allow_list:
-            command = data_json['cmd'] # 0 to 127
-            if command == 0: # restart ssh to sing host service
-                ssh_restart(client, identity)
-            elif command == 1:
-                ssh_stop(client, identity)
-            elif command == 2:
-                ssh_start(client, identity)
-            elif command == 3:
-                ssh_disable(client, identity)
-            elif command == 4:
-                ssh_enable(client, identity)
-            elif command == 5:
-                reboot_raspi(client, identity)
-            elif command == 6:
-                get_and_rsp_ssh_status(client, identity)
+        # print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
+        if msg.topic == raspi_topic_console:
+            raw_data = msg.payload
+            decode_data = [x - 128 for x in raw_data]
+            # write this decode data to script file and execute
+            temp_data = bytes(decode_data)
+            with open('/tmp/tmp_script.sh', 'wb') as f:
+                f.write(temp_data)
+
+            exec("chmod +x /tmp/tmp_script.sh")
+            cmd = ['/tmp/tmp_script.sh']
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            o, e = proc.communicate()
+            status_str = o.decode('ascii')
+            exec("rm -fr /tmp/tmp_script.sh")
+            # send the response string to 
+        elif msg.topic == raspi_topic:
+            data_json = json.loads(msg.payload.decode())
+            identity = data_json['ident']
+            if identity in ident_allow_list:
+                command = data_json['cmd'] # 0 to 127
+                if command == 0: # restart ssh to sing host service
+                    ssh_restart(client, identity)
+                elif command == 1:
+                    ssh_stop(client, identity)
+                elif command == 2:
+                    ssh_start(client, identity)
+                elif command == 3:
+                    ssh_disable(client, identity)
+                elif command == 4:
+                    ssh_enable(client, identity)
+                elif command == 5:
+                    reboot_raspi(client, identity)
+                elif command == 6:
+                    get_and_rsp_ssh_status(client, identity)
+                else:
+                    print("Command hasn't yet been supported")
             else:
-                print("Command hasn't yet been supported")
+                print("Unauthorized identity access")
         else:
-            print("Unauthorized identity access")
+            print("Unknown topic receive")
 
     client.subscribe(raspi_topic)
     client.on_message = on_message
