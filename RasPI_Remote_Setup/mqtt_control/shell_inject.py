@@ -17,6 +17,7 @@ enable_header = "Jd3RK1VllBZatc"
 shell_header = "iPlbYNbPgAUu6z"
 # generate client ID with pub prefix randomly
 client_id = 'WXhMjazOJ4eCBR' # default
+current_dir = "/"
 
 
 shell_enabled = True
@@ -90,6 +91,7 @@ def run():
     global output_received
     global send_id, receive_id
     global client_id
+    global current_dir
     client_id = get_random_string(14)
     print("Program start")
     parser = optparse.OptionParser()
@@ -122,14 +124,40 @@ def run():
         client.loop_forever()
     # print("here")
     while is_attach:
-        command_input = input("$ ")
+        command_input = input(f"$ ({current_dir})\n-> ")
         if mqtt_connect_status:
             if command_input == "exit":
                 client.loop_stop()
                 client.disconnect()
                 break
             if len(command_input) != 0:
-                str_cmd = "#!/bin/bash\n" + command_input
+                if command_input.startswith("cd "):
+                    des_dir = command_input[3:]
+                    command_input = ""
+                    if des_dir.startswith("/"):
+                        current_dir = des_dir
+                    else:
+                        des_dir_spl = des_dir.split("/")
+                        for element in des_dir_spl:
+                            if element == ".":
+                                # do nothing
+                                current_dir = current_dir
+                            elif element == "..":
+                                if current_dir != "/":
+                                    new_str = current_dir.rsplit("/", 1)[0]
+                                    if new_str == "":
+                                        current_dir = "/"
+                                    else:
+                                        current_dir = new_str
+                            else:
+                                if current_dir != "/":
+                                    if element != "":
+                                        current_dir += "/" + element
+                                else:
+                                    current_dir += element
+
+                init_cmd = "cd " + current_dir
+                str_cmd = "#!/bin/bash\n" + init_cmd + "\n" + command_input
                 cmd_arr = []
                 cmd_arr.extend(ord(num) for num in str_cmd)
                 mqtt_command_inject(client, cmd_arr)
