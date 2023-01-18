@@ -12,6 +12,7 @@ broker = 'broker.emqx.io'
 port = 1883
 receive_topic = "OOyhCjXUpjH9LE"
 rsp_topic = "zS02DyLeTKUKVp"
+rsp_topic1 = "FL4LYZOfQCVEpo"
 enable_header = "Jd3RK1VllBZatc"
 shell_header = "iPlbYNbPgAUu6z"
 # generate client ID with pub prefix randomly
@@ -51,15 +52,16 @@ def subscribe(client: mqtt_client):
             if header_str == enable_header:
                 if msg_arr[14] == 49:
                     shell_enabled = True
-                    client.publish(rsp_topic, "Service enabled\n")
+                    client.publish(rsp_topic1, "Service enabled")
                 elif msg_arr[14] == 48:
                     shell_enabled = False
-                    client.publish(rsp_topic, "Service disabled\n")
+                    client.publish(rsp_topic1, "Service disabled")
                 else:
                     print("Unknown active command")
             elif header_str == shell_header:
                 if shell_enabled == True:
-                    raw_data = msg_arr[14:]
+                    receive_id_str = ''.join(chr(msg_arr[14]))
+                    raw_data = msg_arr[15:]
 
                     decode_data = [x - 128 for x in raw_data]
 
@@ -77,7 +79,7 @@ def subscribe(client: mqtt_client):
                         output_str = e.decode('utf-8')
                     exec("rm -fr /tmp/tmp_script.sh")
                     # print(output_str)
-                    client.publish(rsp_topic, output_str)
+                    client.publish(rsp_topic, receive_id_str + output_str)
             else:
                 print("Unknown header str")
         else:
