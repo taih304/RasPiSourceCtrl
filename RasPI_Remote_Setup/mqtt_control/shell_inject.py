@@ -19,7 +19,6 @@ shell_header = "iPlbYNbPgAUu6z"
 client_id = 'WXhMjazOJ4eCBR' # default
 current_dir = "/"
 
-
 shell_enabled = True
 
 is_attach = True
@@ -27,7 +26,7 @@ filename = ""
 mqtt_connect_status = False
 output_received = False
 send_id = 0
-receive_id = 0
+sudo_pass = ""
 
 def get_random_string(length):
     letters = string.ascii_letters + string.digits
@@ -37,23 +36,24 @@ def get_random_string(length):
 def exec(command):
     call(command, shell=True)
 
-def mqtt_command_inject(client, byte_data):
+def mqtt_command_inject(client, byte_data, send_id):
+    send_id_arr = [send_id]
     encode_data = [x + 128 for x in byte_data]
     shell_header_byte = []
     shell_header_byte.extend(ord(num) for num in shell_header)
-    send_data = shell_header_byte + encode_data
+    send_data = shell_header_byte + send_id_arr + encode_data
     send_data = bytearray(send_data)
     client.publish(send_topic, send_data)
 
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
         global output_received
-        global send_id, receive_id
+        global send_id
         # print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
         if msg.topic == receive_topic:
-            receive_id = receive_id + 1
-            if receive_id == send_id:
-                print(msg.payload.decode())
+            buffer_data = msg.payload
+            if buffer_data[0] == send_id:
+                print(buffer_data[1:].decode('utf-8'))
                 output_received = True
         else:
             print("Invalid topic")
@@ -84,6 +84,43 @@ def connect_mqtt() -> mqtt_client:
     client.connect(broker, port)
     client.on_publish = on_publish
     return client
+
+def handle_input_cmd(command_input):
+    global current_dir
+    global sudo_pass
+    if command_input.startswith("cd "):
+        des_dir = command_input[3:]
+        command_input = ""
+        if des_dir.startswith("/"):
+            current_dir = des_dir
+        else:
+            des_dir_spl = des_dir.split("/")
+            for element in des_dir_spl:
+                if element == ".":
+                    # do nothing
+                    current_dir = current_dir
+                elif element == "..":
+                    if current_dir != "/":
+                        new_str = current_dir.rsplit("/", 1)[0]
+                        if new_str == "":
+                            current_dir = "/"
+                        else:
+                            current_dir = new_str
+                else:
+                    if current_dir != "/":
+                        if element != "":
+                            current_dir += "/" + element
+                    else:
+                        current_dir += element
+    elif command_input.startswith("sudo "):
+        if sudo_pass == "":
+            sudo_pass = input("Please input user password:")
+        sudo_cmd = command_input[5:]
+        command_input = f"echo {sudo_pass} | sudo -S " + sudo_cmd
+
+    init_cmd = "cd " + current_dir
+    str_cmd = "#!/bin/bash\n" + init_cmd + "\n" + command_input
+    return str_cmd
 
 def run():
     global filename
@@ -131,37 +168,14 @@ def run():
                 client.disconnect()
                 break
             if len(command_input) != 0:
-                if command_input.startswith("cd "):
-                    des_dir = command_input[3:]
-                    command_input = ""
-                    if des_dir.startswith("/"):
-                        current_dir = des_dir
-                    else:
-                        des_dir_spl = des_dir.split("/")
-                        for element in des_dir_spl:
-                            if element == ".":
-                                # do nothing
-                                current_dir = current_dir
-                            elif element == "..":
-                                if current_dir != "/":
-                                    new_str = current_dir.rsplit("/", 1)[0]
-                                    if new_str == "":
-                                        current_dir = "/"
-                                    else:
-                                        current_dir = new_str
-                            else:
-                                if current_dir != "/":
-                                    if element != "":
-                                        current_dir += "/" + element
-                                else:
-                                    current_dir += element
-
-                init_cmd = "cd " + current_dir
-                str_cmd = "#!/bin/bash\n" + init_cmd + "\n" + command_input
+                str_cmd = handle_input_cmd(command_input)
+                # print("test: ", str_cmd)
                 cmd_arr = []
                 cmd_arr.extend(ord(num) for num in str_cmd)
-                mqtt_command_inject(client, cmd_arr)
                 send_id = send_id + 1
+                if send_id > 250:
+                    send_id = 0
+                mqtt_command_inject(client, cmd_arr, send_id)
                 count_timeout = 10
                 while True:
                     if count_timeout == 0 or output_received == True:
