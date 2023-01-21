@@ -17,6 +17,7 @@ enable_header = "Jd3RK1VllBZatc"
 shell_header = "iPlbYNbPgAUu6z"
 # generate client ID with pub prefix randomly
 client_id = 'WXhMjazOJ4eCBR' # default
+previous_dir = ""
 current_dir = "/"
 
 shell_enabled = True
@@ -47,13 +48,18 @@ def mqtt_command_inject(client, byte_data, send_id):
 
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
+        global current_dir, previous_dir
         global output_received
         global send_id
         # print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
         if msg.topic == receive_topic:
             buffer_data = msg.payload
             if buffer_data[0] == send_id:
-                print(buffer_data[1:].decode('utf-8'))
+                output_message = buffer_data[1:].decode('utf-8')
+                cd_string = f"cd: {current_dir}"
+                if cd_string in output_message:
+                    current_dir = previous_dir
+                print(output_message)
                 output_received = True
         else:
             print("Invalid topic")
@@ -86,8 +92,10 @@ def connect_mqtt() -> mqtt_client:
     return client
 
 def handle_input_cmd(command_input):
+    global previous_dir
     global current_dir
     global sudo_pass
+    previous_dir = current_dir
     if command_input.startswith("cd "):
         des_dir = command_input[3:]
         command_input = ""
