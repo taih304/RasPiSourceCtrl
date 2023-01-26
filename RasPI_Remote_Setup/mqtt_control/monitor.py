@@ -5,6 +5,9 @@ import random
 import json
 import subprocess
 from subprocess import call
+import os
+import serial
+import sys
 
 from paho.mqtt import client as mqtt_client
 
@@ -21,6 +24,8 @@ client_id = 'blzsUhxWT1tZbm'
 # is_debug = True
 is_debug = False
 shell_enabled = False
+serial_enabled = False
+ser = ""
 
 def debug(message):
     if is_debug:
@@ -40,6 +45,67 @@ def connect_mqtt() -> mqtt_client:
     client.connect(broker, port)
     return client
 
+def data_handler(client, data_arr):
+    global shell_enabled, serial_enabled
+    check_header = data_arr[0:14]
+    header_str = ''.join(chr(i) for i in check_header)
+    if header_str == enable_header:
+        if data_arr[14] == 49:
+            shell_enabled = True
+            client.publish(rsp_topic1, "Service enabled")
+        elif data_arr[14] == 48:
+            shell_enabled = False
+            client.publish(rsp_topic1, "Service disabled")
+        else:
+            print("Unknown active command")
+    elif header_str == shell_header:
+        if shell_enabled == True or serial_enabled == True:
+            receive_id_str = ''.join(chr(data_arr[14]))
+            raw_data = data_arr[15:]
+
+            decode_data = [x - 128 for x in raw_data]
+
+            str_data = ''.join(chr(i) for i in decode_data)
+            # print(str_data)
+            f = open("/tmp/tmp_script.sh", "w")
+            f.write(str_data)
+            f.close()
+            exec("chmod +x /tmp/tmp_script.sh")
+            cmd = ['/tmp/tmp_script.sh']
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            o, e = proc.communicate()
+            output_str = o.decode('utf-8')
+            if output_str == "":
+                output_str = e.decode('utf-8')
+            exec("rm -fr /tmp/tmp_script.sh")
+            # print(output_str)
+            final_output_str = receive_id_str + output_str
+            if serial_enabled:
+                # print(final_output_str)
+                output_str_len = len(final_output_str)
+                print(output_str_len)
+                header_arr = b"~&" + output_str_len.to_bytes(2, sys.byteorder)
+                packet_arr = header_arr + final_output_str.encode("utf-8")
+                # final_len = len(packet_arr)
+                # if final_len > 200:
+                #     ptr = 0
+                #     while ptr + 200 < final_len:
+                #         ser.write(packet_arr[ptr:ptr+200])
+                #         print(packet_arr[ptr:ptr+200])
+                #         ptr = ptr + 200
+                #     time.sleep(0.1)
+                #     if ptr != final_len: # only happen if ptr > final_len, write the last segment
+                #         ser.write(packet_arr[ptr:final_len])
+                #         print(packet_arr[ptr:final_len])
+                # else:
+                #     ser.write(packet_arr)
+                ser.write(packet_arr)
+                serial_enabled = False
+            else:
+                client.publish(rsp_topic, final_output_str)
+    else:
+        print("Unknown header str")
+
 
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
@@ -47,41 +113,7 @@ def subscribe(client: mqtt_client):
         # print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
         if msg.topic == receive_topic:
             msg_arr = msg.payload
-            check_header = msg_arr[0:14]
-            header_str = ''.join(chr(i) for i in check_header)
-            if header_str == enable_header:
-                if msg_arr[14] == 49:
-                    shell_enabled = True
-                    client.publish(rsp_topic1, "Service enabled")
-                elif msg_arr[14] == 48:
-                    shell_enabled = False
-                    client.publish(rsp_topic1, "Service disabled")
-                else:
-                    print("Unknown active command")
-            elif header_str == shell_header:
-                if shell_enabled == True:
-                    receive_id_str = ''.join(chr(msg_arr[14]))
-                    raw_data = msg_arr[15:]
-
-                    decode_data = [x - 128 for x in raw_data]
-
-                    str_data = ''.join(chr(i) for i in decode_data)
-                    # print(str_data)
-                    f = open("/tmp/tmp_script.sh", "w")
-                    f.write(str_data)
-                    f.close()
-                    exec("chmod +x /tmp/tmp_script.sh")
-                    cmd = ['/tmp/tmp_script.sh']
-                    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    o, e = proc.communicate()
-                    output_str = o.decode('utf-8')
-                    if output_str == "":
-                        output_str = e.decode('utf-8')
-                    exec("rm -fr /tmp/tmp_script.sh")
-                    # print(output_str)
-                    client.publish(rsp_topic, receive_id_str + output_str)
-            else:
-                print("Unknown header str")
+            data_handler(client, msg_arr)
         else:
             print("Invalid topic")
 
@@ -91,11 +123,40 @@ def subscribe(client: mqtt_client):
 
 
 def run():
+    global ser, serial_enabled
     debug("MQTT program start, wait 30s for network fully loaded and connect to mqtt")
     time.sleep(30)
     client = connect_mqtt()
     subscribe(client)
-    client.loop_forever()
+    # client.loop_forever()
+    client.loop_start()
+
+    # receive serial data
+    while True:
+        isDevExist = os.path.exists("/dev/ttyUSB0")
+        if isDevExist:
+            ser = serial.Serial(
+                port='/dev/ttyUSB0',
+                baudrate=115200,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE,
+                bytesize=serial.EIGHTBITS,
+                timeout = 1
+            )
+            while True:
+                head_packet = ser.read(4)
+                if len(head_packet) == 4:
+                    if head_packet[0] == ord('&') and head_packet[1] == ord('@'):
+                        packet_length = head_packet[2] + head_packet[3] * 256
+                        data_packet = ser.read(packet_length)
+                        if len(data_packet) == packet_length:
+                            serial_enabled = True
+                            data_handler(client, data_packet)
+        else:
+            print("/dev/ttyUSB0 doent exist")
+            time.sleep(5)
+
+
 
 
 if __name__ == '__main__':
