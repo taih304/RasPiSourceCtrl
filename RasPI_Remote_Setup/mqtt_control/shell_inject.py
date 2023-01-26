@@ -15,6 +15,7 @@ send_topic = "OOyhCjXUpjH9LE"
 receive_topic = "zS02DyLeTKUKVp"
 enable_header = "Jd3RK1VllBZatc"
 shell_header = "iPlbYNbPgAUu6z"
+bmc_shell_rec = "0hPDq4RAxSc3xp"
 # generate client ID with pub prefix randomly
 client_id = 'WXhMjazOJ4eCBR' # default
 previous_dir = ""
@@ -37,14 +38,14 @@ def get_random_string(length):
 def exec(command):
     call(command, shell=True)
 
-def mqtt_command_inject(client, byte_data, send_id):
+def mqtt_command_inject(client, des_topic, byte_data, send_id):
     send_id_arr = [send_id]
     encode_data = [x + 128 for x in byte_data]
     shell_header_byte = []
     shell_header_byte.extend(ord(num) for num in shell_header)
     send_data = shell_header_byte + send_id_arr + encode_data
     send_data = bytearray(send_data)
-    client.publish(send_topic, send_data)
+    client.publish(des_topic, send_data)
 
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
@@ -75,7 +76,7 @@ def connect_mqtt() -> mqtt_client:
             if filename != "":
                 f = open(filename, "rb")
                 raw_data = f.read()
-                mqtt_command_inject(client, raw_data)
+                # mqtt_command_inject(client, raw_data)
         else:
             mqtt_connect_status = False
             print(f"Failed to connect, return code {rc}")
@@ -141,34 +142,41 @@ def run():
     print("Program start")
     parser = optparse.OptionParser()
     parser.add_option("-a", "--attach",
-                      action = "store_true",
+                      type = 'string',
                       dest = "is_attach",
-                      default = True,
+                      default = "mc",
                       help = "attach the console")
     parser.add_option("-f", "--file", dest = 'filename',
                       type = 'string', default = "",
                       help = 'specify a script file')
     (options, args) = parser.parse_args()
-    if options.is_attach:
+    main_topic = ""
+    if options.is_attach == "mc":
         # print("yes")
         is_attach = True
-    else:
+        main_topic = bmc_shell_rec
+    elif options.is_attach == "directly":
         is_attach = False
-    if options.filename == "":
-        # print("string empty")
-        filename = ""
+        main_topic = send_topic
     else:
-        # print("filename: ", options.filename)
-        filename = options.filename
-        is_attach = False
+        print("unknown option attach option")
+        exit(0)
+    # if options.filename == "":
+    #     # print("string empty")
+    #     filename = ""
+    # else:
+    #     # print("filename: ", options.filename)
+    #     filename = options.filename
+    #     is_attach = False
     client = connect_mqtt()
     subscribe(client)
-    if is_attach:
-        client.loop_start()
-    else:
-        client.loop_forever()
+    # if is_attach:
+    #     client.loop_start()
+    # else:
+    #     client.loop_forever()
     # print("here")
-    while is_attach:
+    client.loop_start()
+    while True:
         command_input = input(f"$ ({current_dir})\n-> ")
         if mqtt_connect_status:
             if command_input == "exit":
@@ -183,7 +191,7 @@ def run():
                 send_id = send_id + 1
                 if send_id > 250:
                     send_id = 0
-                mqtt_command_inject(client, cmd_arr, send_id)
+                mqtt_command_inject(client, main_topic, cmd_arr, send_id)
                 count_timeout = 10
                 while True:
                     if count_timeout == 0 or output_received == True:
