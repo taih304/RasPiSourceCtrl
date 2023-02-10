@@ -1,0 +1,8 @@
+#!/bin/bash
+
+WD_IP=192.168.1.11
+MACHINE_NAME=purple
+USER_NAME=httco
+PASSWD=Htt167943522
+
+sshpass -p $PASSWD ssh $MACHINE_NAME/$USER_NAME@$WD_IP
