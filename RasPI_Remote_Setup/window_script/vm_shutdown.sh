@@ -5,4 +5,5 @@ MACHINE_NAME=$(cat wd_ssh.conf | jq -r .MACHINE_NAME)
 USER_NAME=$(cat wd_ssh.conf | jq -r .USER_NAME)
 PASSWD=$(cat wd_ssh.conf | jq -r .PASSWD)
 
-sshpass -p $PASSWD ssh $MACHINE_NAME/$USER_NAME@$WD_IP
+
+sshpass -p $PASSWD ssh $MACHINE_NAME/$USER_NAME@$WD_IP "ssh purelife@127.0.1.1 \"echo a | sudo -S shutdown -h now\""
