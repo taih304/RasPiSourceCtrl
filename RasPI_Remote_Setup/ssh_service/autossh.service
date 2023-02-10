@@ -3,7 +3,7 @@ Description=Auto ssh service
 After=network.target
 
 [Service]
-ExecStart=/bin/bash /home/pi/workspace/init_script/bootup/bootup.sh
+ExecStart=/bin/bash /etc/my_service/autossh.sh
 
 [Install]
 WantedBy=multi-user.target
