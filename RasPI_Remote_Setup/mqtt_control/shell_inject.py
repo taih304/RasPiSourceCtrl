@@ -16,6 +16,8 @@ receive_topic = "zS02DyLeTKUKVp"
 enable_header = "Jd3RK1VllBZatc"
 shell_header = "iPlbYNbPgAUu6z"
 bmc_shell_rec = "0hPDq4RAxSc3xp"
+esp_receive_topic = "FL4LYZOfQCVEpo"
+esp_send_topic = "Klcgd1cSk7cvkQ"
 # generate client ID with pub prefix randomly
 client_id = 'WXhMjazOJ4eCBR' # default
 previous_dir = ""
@@ -29,6 +31,15 @@ mqtt_connect_status = False
 output_received = False
 send_id = 0
 sudo_pass = ""
+is_esp = True
+
+# shell id 0 is for mc shell and 1 for raspi shell
+macro_list = [
+    ["wd_wake", "cd /home/pi/workspace/init_script/window_script && ./wd_wake.sh", 1],
+    ["wd_hibernate", "cd /home/pi/workspace/init_script/window_script && ./wd_hibernate.sh", 1],
+    ["wd_sleep", "cd /home/pi/workspace/init_script/window_script && ./wd_sleep.sh", 1],
+    ["ssh_enable", "sudo systemctl restart autossh.service", 1]
+]
 
 def get_random_string(length):
     letters = string.ascii_letters + string.digits
@@ -62,9 +73,13 @@ def subscribe(client: mqtt_client):
                     current_dir = previous_dir
                 print(output_message)
                 output_received = True
+        elif msg.topic == esp_receive_topic:
+            output_received = True
+            print("rsp -> " + msg.payload.decode())
         else:
             print("Invalid topic")
     client.subscribe(receive_topic)
+    client.subscribe(esp_receive_topic)
     client.on_message = on_message
 
 def connect_mqtt() -> mqtt_client:
@@ -128,8 +143,66 @@ def handle_input_cmd(command_input):
         command_input = f"echo {sudo_pass} | sudo -S " + sudo_cmd
 
     init_cmd = "cd " + current_dir
-    str_cmd = "#!/bin/bash\n" + init_cmd + "\n" + command_input
+    str_cmd = "#!/bin/bash\n" + 'eval "$(cat /home/pi/.bashrc | tail -n +10)"\n' + init_cmd + "\n" + command_input
     return str_cmd
+
+def handle_mc_cmd(client, command_input):
+    cmd_arr = command_input.split(" ")
+    if len(cmd_arr) < 2:
+        print("Command not enough params")
+        return False
+    netfn = cmd_arr[0]
+    action = cmd_arr[1]
+    if netfn == "mc":
+        if action == "on":
+            client.publish(esp_send_topic, "1")
+        elif action == "off":
+            client.publish(esp_send_topic, "0")
+        elif action == "get":
+            client.publish(esp_send_topic, "2")
+        elif action == "pin":
+            option = cmd_arr[2]
+            if option == "set":
+                p_mode = cmd_arr[3]
+                pin_num = cmd_arr[4]
+                if p_mode == "output":
+                    client.publish(esp_send_topic, f"3MO{pin_num}")
+                elif p_mode == "input":
+                    print("something")
+                else:
+                    print("Unknown pin mode: " + p_mode)
+                    return False
+            elif option == "level":
+                pin_state = cmd_arr[3]
+                pin_num = cmd_arr[4]
+                if pin_state == "high":
+                    client.publish(esp_send_topic, f"3SE{pin_num}")
+                elif pin_state == "low":
+                    client.publish(esp_send_topic, f"3SD{pin_num}")
+                elif pin_state == "pushl":
+                    client.publish(esp_send_topic, f"3SP{pin_num}")
+                else:
+                    print("Unknown pin state: " + pin_state)
+                    return False
+            else:
+                print("Unknown option: " + option)
+                return False
+        else:
+            print("Unknown action: " + action)
+            return False
+    elif netfn == "shell":
+        if action == "enable":
+            client.publish(send_topic, "Jd3RK1VllBZatc1")
+        elif action == "disable":
+            client.publish(send_topic, "Jd3RK1VllBZatc0")
+        else:
+            print("Unknown action: " + action)
+            return False
+    else:
+        print("Unknowk netfn: " + netfn)
+        return False
+    return True
+
 
 def run():
     global filename
@@ -138,13 +211,14 @@ def run():
     global send_id, receive_id
     global client_id
     global current_dir
+    global is_esp
     client_id = get_random_string(14)
     print("Program start")
     parser = optparse.OptionParser()
     parser.add_option("-a", "--attach",
                       type = 'string',
                       dest = "is_attach",
-                      default = "mc",
+                      default = "directly",
                       help = "attach the console")
     parser.add_option("-f", "--file", dest = 'filename',
                       type = 'string', default = "",
@@ -153,9 +227,11 @@ def run():
     main_topic = ""
     if options.is_attach == "mc":
         # print("yes")
+        is_esp = True
         is_attach = True
         main_topic = bmc_shell_rec
     elif options.is_attach == "directly":
+        is_esp = False
         is_attach = False
         main_topic = send_topic
     else:
@@ -177,29 +253,57 @@ def run():
     # print("here")
     client.loop_start()
     while True:
-        command_input = input(f"$ ({current_dir})\n-> ")
+        if is_esp:
+            command_input = input("mc <-: ")
+            shell_id = 0
+        else:
+            main_topic = send_topic
+            command_input = input(f"$ ({current_dir})\n-> ")
+            shell_id = 1
         if mqtt_connect_status:
             if command_input == "exit":
                 client.loop_stop()
                 client.disconnect()
                 break
+            elif command_input == "switch":
+                is_esp = not(is_esp)
+                continue
+
+            # check pre-define macro for each function shell
+            for macro in macro_list:
+                if macro[2] == shell_id:
+                    if command_input == macro[0]:
+                        command_input = macro[1]
+
             if len(command_input) != 0:
-                str_cmd = handle_input_cmd(command_input)
-                # print("test: ", str_cmd)
-                cmd_arr = []
-                cmd_arr.extend(ord(num) for num in str_cmd)
-                send_id = send_id + 1
-                if send_id > 250:
-                    send_id = 0
-                mqtt_command_inject(client, main_topic, cmd_arr, send_id)
-                count_timeout = 10
-                while True:
-                    if count_timeout == 0 or output_received == True:
-                        time.sleep(0.1)
-                        break
-                    count_timeout = count_timeout - 1
-                    time.sleep(0.5)
-                output_received = False
+                if is_esp:
+                    rc = handle_mc_cmd(client, command_input)
+                    if rc:
+                        count_timeout = 10
+                        output_received = False
+                        while True:
+                            if count_timeout == 0 or output_received == True:
+                                time.sleep(0.1)
+                                break
+                            count_timeout = count_timeout - 1
+                            time.sleep(0.5)
+                else:
+                    str_cmd = handle_input_cmd(command_input)
+                    # print("test: ", str_cmd)
+                    cmd_arr = []
+                    cmd_arr.extend(ord(num) for num in str_cmd)
+                    send_id = send_id + 1
+                    if send_id > 250:
+                        send_id = 0
+                    mqtt_command_inject(client, main_topic, cmd_arr, send_id)
+                    count_timeout = 10
+                    output_received = False
+                    while True:
+                        if count_timeout == 0 or output_received == True:
+                            time.sleep(0.1)
+                            break
+                        count_timeout = count_timeout - 1
+                        time.sleep(0.5)
         else:
             print("MQTT isn't connected, shell inject won't work")
         

@@ -39,7 +39,32 @@ do
             mosquitto_pub -h broker.emqx.io -t "Klcgd1cSk7cvkQ" -m '0'
         elif [[ $ACTION == "get" ]]; then
             mosquitto_pub -h broker.emqx.io -t "Klcgd1cSk7cvkQ" -m '2'
-        else
+        elif [[ $ACTION == "pin" ]]; then
+	    OPTION=$(echo "$CMD_ARG" | cut -d " " -f3)
+	    if [[ $OPTION == "set" ]]; then
+		P_MODE=$(echo "$CMD_ARG" | cut -d " " -f4)
+		PIN_NUM=$(echo "$CMD_ARG" | cut -d " " -f5)
+		if [[ $P_MODE == "output" ]]; then
+		    mosquitto_pub -h broker.emqx.io -t "Klcgd1cSk7cvkQ" -m "3MO$PIN_NUM"
+		elif [[ $P_MODE == "input" ]]; then
+		    echo "something"
+		fi
+	    elif [[ $OPTION == "level" ]]; then
+		PIN_STATE=$(echo "$CMD_ARG" | cut -d " " -f4)
+                PIN_NUM=$(echo "$CMD_ARG" | cut -d " " -f5)
+		if [[ $PIN_STATE == "high" ]]; then
+		    mosquitto_pub -h broker.emqx.io -t "Klcgd1cSk7cvkQ" -m "3SE$PIN_NUM"
+		elif [[ $PIN_STATE == "low" ]]; then
+		    mosquitto_pub -h broker.emqx.io -t "Klcgd1cSk7cvkQ" -m "3SD$PIN_NUM"
+		elif [[ $PIN_STATE == "pushl" ]]; then
+		    mosquitto_pub -h broker.emqx.io -t "Klcgd1cSk7cvkQ" -m "3SP$PIN_NUM"
+	    	else
+		    echo "Unknown pin state: $PIN_STATE"
+		fi
+	    else
+		echo "Unknown option: $OPTION"
+	    fi
+    	else
             echo "Unknown action: $ACTION"
         fi
     elif [[ $NETFN == "shell" ]]; then
@@ -50,6 +75,10 @@ do
         else
             echo "Unknown state: $ACTION"
         fi
+    elif [[ $NETFN == "exit" ]]; then
+	SUB_PID=$(ps -ef | grep mosquitto_sub | grep -v "grep" | tr -s " " | cut -d " " -f2)
+	kill -9 $SUB_PID
+	exit 0
     else
         echo "Unkown netFN: $NETFN"
     fi
