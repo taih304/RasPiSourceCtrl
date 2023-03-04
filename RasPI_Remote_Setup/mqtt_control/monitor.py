@@ -125,37 +125,14 @@ def subscribe(client: mqtt_client):
 def run():
     global ser, serial_enabled
     debug("MQTT program start, wait 30s for network fully loaded and connect to mqtt")
-    time.sleep(30)
+    time.sleep(20)
     client = connect_mqtt()
     subscribe(client)
-    # client.loop_forever()
-    client.loop_start()
+    client.loop_forever()
+    # client.loop_start()
 
     # receive serial data
-    while True:
-        isDevExist = os.path.exists("/dev/ttyUSB0")
-        if isDevExist:
-            ser = serial.Serial(
-                port='/dev/ttyUSB0',
-                baudrate=115200,
-                parity=serial.PARITY_NONE,
-                stopbits=serial.STOPBITS_ONE,
-                bytesize=serial.EIGHTBITS,
-                timeout = 1
-            )
-            while True:
-                head_packet = ser.read(4)
-                if len(head_packet) == 4:
-                    if head_packet[0] == ord('&') and head_packet[1] == ord('@'):
-                        packet_length = head_packet[2] + head_packet[3] * 256
-                        data_packet = ser.read(packet_length)
-                        if len(data_packet) == packet_length:
-                            serial_enabled = True
-                            data_handler(client, data_packet)
-        else:
-            print("/dev/ttyUSB0 doent exist")
-            time.sleep(5)
-
+   
 
 
 
