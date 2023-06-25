@@ -38,7 +38,8 @@ macro_list = [
     ["wd_wake", "cd /home/pi/workspace/init_script/window_script && ./wd_wake.sh", 1],
     ["wd_hibernate", "cd /home/pi/workspace/init_script/window_script && ./wd_hibernate.sh", 1],
     ["wd_sleep", "cd /home/pi/workspace/init_script/window_script && ./wd_sleep.sh", 1],
-    ["ssh_enable", "sudo systemctl restart autossh.service", 1]
+    ["ssh_enable", "sudo systemctl restart autossh.service", 1],
+    ["sd", "sudo shutdown -h now", 1]
 ]
 
 def get_random_string(length):
@@ -114,7 +115,10 @@ def handle_input_cmd(command_input):
     previous_dir = current_dir
     if command_input.startswith("cd "):
         des_dir = command_input[3:]
-        command_input = ""
+        if "&&" in command_input:
+            des_dir = command_input.split("&&")[0][3:].replace(" ","")
+        else:
+            command_input = ""
         if des_dir.startswith("/"):
             current_dir = des_dir
         else:
