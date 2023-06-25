@@ -227,8 +227,23 @@ def run():
     parser.add_option("-f", "--file", dest = 'filename',
                       type = 'string', default = "",
                       help = 'specify a script file')
+    parser.add_option("-c", "--config",
+                     type = 'string',
+                     dest = "config_file",
+                     help = "specify config file")
     (options, args) = parser.parse_args()
     main_topic = ""
+
+    config_file = open(options.config_file)
+    config_data = json.load(config_file)
+
+    broker = config_data['broker']
+    port = config_data['port']
+    send_topic = config_data['receive_topic']
+    receive_topic = config_data['rsp_topic']
+    enable_header = config_data['enable_header']
+    shell_header = config_data['shell_header']
+
     if options.is_attach == "mc":
         # print("yes")
         is_esp = True
