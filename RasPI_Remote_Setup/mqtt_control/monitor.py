@@ -11,15 +11,21 @@ import sys
 
 from paho.mqtt import client as mqtt_client
 
-broker = 'broker.emqx.io'
-port = 1883
-receive_topic = "OOyhCjXUpjH9LE"
-rsp_topic = "zS02DyLeTKUKVp"
+config_file = open("/home/pi/workspace/control_service/.pi_config")
+
+config_data = json.load(config_file)
+
+broker = config_data['broker']
+port = config_data['port']
+receive_topic = config_data['receive_topic']
+rsp_topic = config_data['rsp_topic']
 rsp_topic1 = "FL4LYZOfQCVEpo"
-enable_header = "Jd3RK1VllBZatc"
-shell_header = "iPlbYNbPgAUu6z"
+enable_header = config_data['enable_header']
+shell_header = config_data['shell_header']
 # generate client ID with pub prefix randomly
-client_id = 'blzsUhxWT1tZbm'
+client_id = config_data['client_id']
+
+config_file.close()
 
 # is_debug = True
 is_debug = False
