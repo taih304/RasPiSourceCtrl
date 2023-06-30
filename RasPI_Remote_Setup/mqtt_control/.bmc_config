@@ -1,0 +1,9 @@
+{
+    "broker": "broker.emqx.io",
+    "port": 1883,
+    "receive_topic": "aVDdUeWx7dU0mO",
+    "rsp_topic": "2dJi6egvm37i2w",
+    "shell_header": "WPdkVYpetOtJxT",
+    "enable_header": "pu4xpdSv8FlBzT",
+    "client_id": "N6kDrhQODVoDM1"
+}
