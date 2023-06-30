@@ -216,6 +216,7 @@ def run():
     global client_id
     global current_dir
     global is_esp
+    global broker, port, send_topic, receive_topic, enable_header, shell_header
     client_id = get_random_string(14)
     print("Program start")
     parser = optparse.OptionParser()
